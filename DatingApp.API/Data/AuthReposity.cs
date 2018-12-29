@@ -5,17 +5,16 @@ using Microsoft.EntityFrameworkCore;
 
 namespace DatingApp.API.Data
 {
-    public class AuthReposity : IAuthRepository
+    public class AuthRepository : IAuthRepository
     {
         private readonly DataContext _context;
-        public AuthReposity(DataContext context)
+        public AuthRepository(DataContext context)
         {
             _context = context;
-
         }
-        public async Task<User> LoginAsync(string username, string password)
+        public async Task<User> Login(string username, string password)
         {
-            var user = await _context.Users.FirstOrDefaultAsync(x => x.Username == username);
+            var user = await _context.Users.Include(p => p.Photos).FirstOrDefaultAsync(x => x.Username == username);
 
             if (user == null)
                 return null;
@@ -48,8 +47,9 @@ namespace DatingApp.API.Data
             user.PasswordSalt = passwordSalt;
 
             await _context.Users.AddAsync(user);
+
             await _context.SaveChangesAsync();
-            
+
             return user;
         }
 
@@ -59,7 +59,7 @@ namespace DatingApp.API.Data
             {
                 passwordSalt = hmac.Key;
                 passwordHash = hmac.ComputeHash(System.Text.Encoding.UTF8.GetBytes(password));
-            }
+            } 
         }
 
         public async Task<bool> UserExists(string username)
